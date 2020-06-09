@@ -80,21 +80,24 @@ class TensorDetectionDataset(Dataset):
     @staticmethod
     def crop_image(image, bbox):
         if len(image.shape) == 3 and image.shape[2] == 3:
-            return image[int(bbox.y1):int(bbox.y2),
-                   int(bbox.x1):int(bbox.x2), :]
+            return image[int(bbox[1]):int(bbox[3]),
+                   int(bbox[0]):int(bbox[2]), :]
         elif len(image.shape) == 3 and image.shape[0] == 3:
             return image[:,
-                   int(bbox.y1):int(bbox.y2),
-                   int(bbox.x1):int(bbox.x2)]
+                   int(bbox[1]):int(bbox[3]),
+                   int(bbox[0]):int(bbox[2])]
         else:
             raise RuntimeError(
                 f'Unsupported image shape to crop: {image.shape}')
 
     def __len__(self):
-        return len(self.bboxes)
+        if self.bboxes is not None:
+            return self.bboxes['rois'].shape[0]
+        else:
+            return 0
 
     def __getitem__(self, index):
-        bbox = self.bboxes[index]
+        bbox = self.bboxes['rois'][index]
         image = self.crop_image(self.image, bbox).copy().astype(np.float)
         image = self.Normalize(image)
         image_in1, image_in2 = self.Rescale(image)

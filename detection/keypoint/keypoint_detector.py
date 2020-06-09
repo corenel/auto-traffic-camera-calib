@@ -40,6 +40,7 @@ class KeypointDetector:
                                               std=self.std)
 
     def detect(self, image, bboxes, visualize=False):
+        # image should be in RGB format
         self.dataset.initialize(image=image, bboxes=bboxes)
         test_loader = DataLoader(self.dataset,
                                  shuffle=False,

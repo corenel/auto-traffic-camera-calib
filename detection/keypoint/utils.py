@@ -183,7 +183,7 @@ def visualize_results(outputs, orientations, inputs, global_index,
                                 orientation_labels[orientations[local_i]],
                                 (0, image.shape[0]), cv2.FONT_HERSHEY_SIMPLEX,
                                 1, (255, 0, 0), 1, cv2.LINE_AA)
-        cv2.imwrite('/tmp/{:03d}_{:03d}_neo.jpg'.format(global_index, local_i),
+        cv2.imwrite('/tmp/{:03d}_{:03d}.jpg'.format(global_index, local_i),
                     image)
 
 
