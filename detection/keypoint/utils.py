@@ -41,6 +41,7 @@ class Chronometer:
     """
     Chronometer class to time the code
     """
+
     def __init__(self):
         self.elapsed = 0
         self.start = 0
@@ -161,37 +162,54 @@ def accuracy(output, target):
     return dists.item()
 
 
-def visualize_results(outputs, orientations, inputs, global_index,
-                      denormalize):
-    for local_i in range(outputs.shape[0]):
-        output = outputs[local_i].cpu().numpy()
-        image = inputs[local_i].cpu().numpy().transpose(1, 2, 0)
+def visualize_keypoint(image, coord, kp_idx, orientation):
+    if kp_idx in orientation_to_keypoints[int(orientation)]:
+        image = cv2.circle(image, (int(coord[0]), int(coord[1])), 5, (255, 0, 0), 2)
+        image = cv2.putText(image, str(kp_idx + 1), (int(coord[0]), int(coord[1])),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1,
+                            cv2.LINE_AA)
+        image = cv2.putText(image, orientation_labels[orientation],
+                            (0, image.shape[0]), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                            (255, 0, 0), 1, cv2.LINE_AA)
+    return image
+
+
+def visualize_results(outputs,
+                      orientations,
+                      inputs,
+                      batch_idx,
+                      denormalize,
+                      input_shape=(56, 56),
+                      output_shape=(224, 224)):
+    for box_idx in range(outputs.shape[0]):
+        output = outputs[box_idx].cpu().numpy()
+        image = inputs[box_idx].cpu().numpy().transpose(1, 2, 0)
         image = denormalize(image)
         image = image.astype(np.uint8).copy()
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        for kp_i in range(outputs.shape[1]):
-            if kp_i not in orientation_to_keypoints[int(
-                    orientations[local_i])]:
-                continue
-            coord = (int(output[kp_i][0] / 56.0 * 224),
-                     int(output[kp_i][1] / 56.0 * 224))
-            image = cv2.circle(image, coord, 5, (255, 0, 0), 2)
-            image = cv2.putText(image, str(kp_i + 1), coord,
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1,
-                                cv2.LINE_AA)
-            image = cv2.putText(image,
-                                orientation_labels[orientations[local_i]],
-                                (0, image.shape[0]), cv2.FONT_HERSHEY_SIMPLEX,
-                                1, (255, 0, 0), 1, cv2.LINE_AA)
-        cv2.imwrite('/tmp/{:03d}_{:03d}.jpg'.format(global_index, local_i),
+        for kp_idx in range(outputs.shape[1]):
+            coord = (int(output[kp_idx][0] / input_shape[0] * output_shape[0]),
+                     int(output[kp_idx][1] / input_shape[1] * output_shape[1]))
+            image = visualize_keypoint(image, coord, kp_idx,
+                                       orientations[box_idx])
+        cv2.imwrite('/tmp/{:03d}_{:03d}.jpg'.format(batch_idx, box_idx),
                     image)
 
 
-def process_keypoints(keypoints, orientation, offset_x, offset_y):
-    for i in range(keypoints.shape[0]):
-        if i not in orientation_to_keypoints[int(orientation)]:
-            keypoints[i] = -1
-        else:
-            keypoints[i][0] += offset_x
-            keypoints[i][1] += offset_y
+def process_keypoints(bboxes, keypoints, orientations, input_shape=(56, 56)):
+    print(orientations.shape)
+    print(keypoints.shape)
+    for box_idx in range(orientations.shape[0]):
+        for kp_idx in range(keypoints[box_idx].shape[0]):
+            if kp_idx not in orientation_to_keypoints[int(
+                    orientations[box_idx])]:
+                keypoints[box_idx][kp_idx][0] = -1
+                keypoints[box_idx][kp_idx][1] = -1
+            else:
+                keypoints[box_idx][kp_idx][0] = keypoints[box_idx][kp_idx][0] / input_shape[0] * \
+                                                (bboxes['rois'][box_idx][2] - bboxes['rois'][box_idx][0]) + \
+                                                bboxes['rois'][box_idx][0]
+                keypoints[box_idx][kp_idx][1] = keypoints[box_idx][kp_idx][1] / input_shape[1] * \
+                                                (bboxes['rois'][box_idx][3] - bboxes['rois'][box_idx][1]) + \
+                                                bboxes['rois'][box_idx][1]
     return keypoints

@@ -7,7 +7,7 @@ from tqdm import tqdm
 from detection.keypoint.datasets import TensorDetectionDataset
 from detection.keypoint.models import KeyPointModel
 from detection.keypoint.transforms import Denormalize
-from detection.keypoint.utils import get_preds, visualize_results
+from detection.keypoint.utils import get_preds, visualize_results, process_keypoints
 
 
 class KeypointDetector:
@@ -46,9 +46,9 @@ class KeypointDetector:
                                  shuffle=False,
                                  batch_size=16,
                                  num_workers=16)
-        return self.do_detect(test_loader, visualize=visualize)
+        return self.do_detect(test_loader, visualize=visualize, bboxes=bboxes)
 
-    def do_detect(self, data_loader, visualize=False):
+    def do_detect(self, data_loader, visualize=False, bboxes=None):
         orientations = []
         keypoints = []
         with torch.no_grad():
@@ -86,4 +86,6 @@ class KeypointDetector:
                     pbar.update()
         keypoints = torch.cat(keypoints, dim=0)
         orientations = torch.cat(orientations, dim=0)
+        if bboxes is not None:
+            keypoints = process_keypoints(bboxes, keypoints, orientations)
         return keypoints, orientations

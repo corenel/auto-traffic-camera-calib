@@ -7,6 +7,9 @@ from detection.keypoint import KeypointDetector
 from detection.keypoint.datasets import TestDataset
 from .test_object_detector import detector as object_detector, image as object_image
 
+from detection.keypoint.utils import visualize_keypoint
+from detection.object.utils.utils import visualize_bbox
+
 CHECKPOINT_PATH = '/home/yuthon/Workspace/Vehicle_Key_Point_Orientation_Estimation/' \
                   'checkpoints/stage2/best_fine_kp_checkpoint.pth.tar'
 MEAN_STD_PATH = '/home/yuthon/Workspace/Vehicle_Key_Point_Orientation_Estimation/' \
@@ -37,6 +40,20 @@ class TestKeypointDetector(unittest.TestCase):
         keypoints, orientations = model.detect(frame_rgb,
                                                detections[0],
                                                visualize=True)
+        result = object_image.copy()
+        for box_idx in range(keypoints.shape[0]):
+            result = visualize_bbox(
+                image=result,
+                roi=detections[0]['rois'][box_idx],
+                class_id=detections[0]['class_ids'][box_idx],
+                score=detections[0]['scores'][box_idx],
+                obj_list=object_detector.obj_list)
+            for kp_idx in range(keypoints.shape[1]):
+                result = visualize_keypoint(image=result,
+                                            coord=keypoints[box_idx][kp_idx],
+                                            kp_idx=kp_idx,
+                                            orientation=orientations[box_idx])
+        cv2.imwrite('/tmp/joint_result.png', result)
 
     if __name__ == '__main__':
         unittest.main()

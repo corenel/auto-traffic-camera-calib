@@ -130,20 +130,26 @@ def postprocess(x, anchors, regression, classification, regressBoxes, clipBoxes,
     return out
 
 
+def visualize_bbox(image, roi, class_id, score, obj_list):
+    (x1, y1, x2, y2) = roi.astype(np.int)
+    cv2.rectangle(image, (x1, y1), (x2, y2), (255, 255, 0), 2)
+    obj = obj_list[class_id]
+    score = float(score)
+    image = cv2.putText(image, '{}, {:.3f}'.format(obj, score),
+                        (x1, y1 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                        (255, 255, 0), 1)
+    return image
+
+
 def display(preds, imgs, obj_list, imshow=True, imwrite=False):
     for i in range(len(imgs)):
         if len(preds[i]['rois']) == 0:
             continue
 
         for j in range(len(preds[i]['rois'])):
-            (x1, y1, x2, y2) = preds[i]['rois'][j].astype(np.int)
-            cv2.rectangle(imgs[i], (x1, y1), (x2, y2), (255, 255, 0), 2)
-            obj = obj_list[preds[i]['class_ids'][j]]
-            score = float(preds[i]['scores'][j])
+            imgs[i] = visualize_bbox(imgs[i], roi=preds[i]['rois'][j], class_id=preds[i]['class_ids'][j],
+                                     score=preds[i]['scores'][j], obj_list=obj_list)
 
-            cv2.putText(imgs[i], '{}, {:.3f}'.format(obj, score),
-                        (x1, y1 + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                        (255, 255, 0), 1)
         if imshow:
             cv2.imshow('img', imgs[i])
             cv2.waitKey(0)
