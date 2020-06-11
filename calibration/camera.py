@@ -160,6 +160,14 @@ class Camera:
         assert undistorted_image_coords.ndim == 2
         return undistorted_image_coords
 
+    def calibrate_extrinsic(self, object_points, image_points):
+        ret, rvec, tvec = cv2.solvePnP(object_points, image_points, self.K,
+                                       self.opencv_dist_coeff)
+        rmat = cv2.Rodrigues(rvec)[0]
+        # self.set_R(rmat)
+        # self.set_t(tvec)
+        return ret, rmat, tvec
+
     def world_to_image(self, world):
         """
         Project world coordinates to image coordinates.

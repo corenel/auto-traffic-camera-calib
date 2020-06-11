@@ -68,17 +68,17 @@ class KeypointDetector:
                     predicted_keypoints = get_preds(fine_kp).cpu()
                     keypoints.append(predicted_keypoints)
                     # print('fine_kp: {}'.format(fine_kp.shape))
-                    print('predicted_keypoints: {}'.format(
-                        predicted_keypoints.shape))
+                    # print('predicted_keypoints: {}'.format(
+                    #     predicted_keypoints.shape))
 
                     _, predicted_orientations = torch.max(orientation.data, 1)
                     predicted_orientations = predicted_orientations.cpu()
                     orientations.append(predicted_orientations)
-                    print('predicted_orientations: {}'.format(
-                        predicted_orientations.shape))
+                    # print('predicted_orientations: {}'.format(
+                    #     predicted_orientations.shape))
 
                     if visualize:
-                        print(predicted_orientations)
+                        # print(predicted_orientations)
                         visualize_results(predicted_keypoints,
                                           predicted_orientations, image_in1, i,
                                           self.denormalize)

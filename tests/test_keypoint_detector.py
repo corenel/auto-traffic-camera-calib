@@ -55,5 +55,6 @@ class TestKeypointDetector(unittest.TestCase):
                                             orientation=orientations[box_idx])
         cv2.imwrite('/tmp/joint_result.png', result)
 
-    if __name__ == '__main__':
-        unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()

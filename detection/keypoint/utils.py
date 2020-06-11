@@ -197,8 +197,6 @@ def visualize_results(outputs,
 
 
 def process_keypoints(bboxes, keypoints, orientations, input_shape=(56, 56)):
-    print(orientations.shape)
-    print(keypoints.shape)
     for box_idx in range(orientations.shape[0]):
         for kp_idx in range(keypoints[box_idx].shape[0]):
             if kp_idx not in orientation_to_keypoints[int(
