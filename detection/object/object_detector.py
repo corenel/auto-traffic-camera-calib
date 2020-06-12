@@ -1,4 +1,5 @@
 import time
+from collections import defaultdict
 import os
 import torch
 import cv2
@@ -27,7 +28,9 @@ class ObjectDetector:
         '', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier',
         'toothbrush'
     ]
-    valid_obj_list = [2, 5]
+    valid_obj_list = [2]
+    valid_width_ratio = 0.05
+    valid_height_ratio = 0.05
     # tf bi-linear interpolation is different from any other's, just make do
     input_sizes = [512, 640, 768, 896, 1024, 1280, 1280, 1536]
 
@@ -83,12 +86,31 @@ class ObjectDetector:
 
             return imgs[i]
 
-    def filter_detections(self, detections):
-        for i in range(len(detections)):
-            mask = np.in1d(detections[i]['class_ids'], np.asarray(self.valid_obj_list))
-            detections[i]['rois'] = detections[i]['rois'][mask]
-            detections[i]['class_ids'] = detections[i]['class_ids'][mask]
-            detections[i]['scores'] = detections[i]['scores'][mask]
+    def filter_detections(self, detections, image_width, image_height):
+        # only filter by class id
+        # mask = np.in1d(detections[det_idx]['class_ids'], np.asarray(self.valid_obj_list))
+        # detections[det_idx]['rois'] = detections[det_idx]['rois'][mask]
+        # detections[det_idx]['class_ids'] = detections[det_idx]['class_ids'][mask]
+        # detections[det_idx]['scores'] = detections[det_idx]['scores'][mask]
+
+        for det_idx in range(len(detections)):
+            rois, class_ids, scores = [], [], []
+            for box_idx in range(detections[det_idx]['rois'].shape[0]):
+                class_id = detections[det_idx]['class_ids'][box_idx]
+                box = detections[det_idx]['rois'][box_idx]
+                box_width = box[2] - box[0]
+                box_height = box[3] - box[1]
+                if class_id in self.valid_obj_list and \
+                        box_width >= image_width * self.valid_width_ratio and \
+                        box_height >= image_height * self.valid_height_ratio:
+                    rois.append(box)
+                    class_ids.append(class_id)
+                    scores.append(detections[det_idx]['scores'][box_idx])
+            detections[det_idx] = {
+                'rois': np.stack(rois),
+                'class_ids': np.stack(class_ids),
+                'scores': np.stack(scores)
+            }
         return detections
 
     def detect(self, frame, visualize=False):
@@ -113,7 +135,9 @@ class ObjectDetector:
             detections = postprocess(x, anchors, regression, classification,
                                      self.regressBoxes, self.clipBoxes,
                                      self.threshold, self.iou_threshold)
-        detections = self.filter_detections(detections)
+        detections = self.filter_detections(detections,
+                                            image_width=framed_metas[0][0],
+                                            image_height=framed_metas[0][1])
         detections = invert_affine(framed_metas, detections)
 
         # result

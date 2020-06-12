@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 
 
@@ -26,8 +27,21 @@ def compute_z_avg(calibs):
     return np.mean(calibs[:, :, 2], axis=0)
 
 
-def compute_average_rotation_matrix(z_avg):
-    return 0
+def compute_average_rotation_matrix(calibs):
+    common_unit_vector = np.array([0, 0, 1])
+    # compute average normalized rotated vector
+    rotated_vectors = []
+    for box_idx in range(calibs.shape[0]):
+        rotated_vector = np.matmul(calibs[box_idx][:, :3], common_unit_vector)
+        rotated_vectors.append(rotated_vector / np.linalg.norm(rotated_vector))
+    mean_rotated_vector = np.mean(np.stack(rotated_vectors), axis=0)
+    mean_rotated_vector /= np.linalg.norm(mean_rotated_vector)
+    # compute average rotation matrix
+    axis = np.cross(mean_rotated_vector, common_unit_vector)
+    angle = np.dot(mean_rotated_vector, common_unit_vector)
+    rvec = angle * axis
+    rmat = cv2.Rodrigues(rvec)[0]
+    return rmat
 
 
 def reproject_to_ground(p, calib, camera):
@@ -48,3 +62,15 @@ def compute_displacement(calibs, p, camera):
         d_i = distance_to_camera(p_i, calibs[calib_idx])
         displacements.append(d_i)
     return displacements
+
+
+def basis(v):
+    v = v / np.linalg.norm(v)
+    if v[0] > 0.9:
+        b1 = np.asarray([0.0, 1.0, 0.0])
+    else:
+        b1 = np.asarray([1.0, 0.0, 0.0])
+    b1 -= v * np.dot(b1, v)
+    b1 /= np.linalg.norm(b1)
+    b2 = np.cross(v, b1)
+    return b1, b2, v

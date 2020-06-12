@@ -5,7 +5,7 @@ import cv2
 from detection.object import ObjectDetector
 
 CHECKPOINT_DIR = '/home/yuthon/Workspace/Yet-Another-EfficientDet-Pytorch/weights'
-TEST_IMAGE_PATH = '/media/Data/supcon-traffic-surveillance/frames/100000/100000_00001.jpg'
+TEST_IMAGE_PATH = '/media/Data/supcon-traffic-surveillance/frames/100000/100000_00210.jpg'
 
 image = cv2.imread(TEST_IMAGE_PATH)
 detector = ObjectDetector(checkpoint_dir=CHECKPOINT_DIR)

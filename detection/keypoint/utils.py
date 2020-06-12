@@ -162,15 +162,15 @@ def accuracy(output, target):
     return dists.item()
 
 
-def visualize_keypoint(image, coord, kp_idx, orientation):
+def visualize_keypoint(image, coord, kp_idx, orientation, color=(255, 255, 0)):
     if kp_idx in orientation_to_keypoints[int(orientation)]:
-        image = cv2.circle(image, (int(coord[0]), int(coord[1])), 5, (255, 0, 0), 2)
+        image = cv2.circle(image, (int(coord[0]), int(coord[1])), 5, color, 2)
         image = cv2.putText(image, str(kp_idx + 1), (int(coord[0]), int(coord[1])),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1,
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2,
                             cv2.LINE_AA)
         image = cv2.putText(image, orientation_labels[orientation],
                             (0, image.shape[0]), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                            (255, 0, 0), 1, cv2.LINE_AA)
+                            color, 2, cv2.LINE_AA)
     return image
 
 
