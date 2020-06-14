@@ -18,16 +18,18 @@ model = KeypointDetector(checkpoint_path=CHECKPOINT_PATH,
 
 
 class TestCalibrator(unittest.TestCase):
-    def test_inference_from_bboxes(self):
+    def test_calibration(self):
         detections = object_detector.detect(frame=object_image)
         frame_rgb = cv2.cvtColor(object_image, cv2.COLOR_BGR2RGB)
         keypoints, orientations = model.detect(frame_rgb,
                                                detections[0],
                                                visualize=True)
         calibrator = Calibration()
-        calibrator.camera.set_K(np.array([[1, 0, 1], [0, 1, 1], [0, 0, 1]]))
+        calibrator.camera.set_K(np.array([[1, 0, 1296], [0, 1, 1024], [0, 0, 1]]))
         calibs = calibrator.calibrate(keypoints.cpu().numpy(),
                                       orientations.cpu().numpy())
+        calib_est = calibrator.filter_and_average(calibs)
+        print(calib_est)
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ from detection.keypoint.utils import orientation_to_keypoints
 
 
 def compute_focus_region_mid_point():
-    return 1
+    return np.array([1296, 1024]).reshape(2, 1).astype(np.float)
 
 
 class Calibration:
@@ -44,7 +44,6 @@ class Calibration:
         calibs = filters.orientation_filter(calibs, 0.75)
 
         # compute average R
-        # z_avg = utils.compute_z_avg(calibs)
         r_avg = utils.compute_average_rotation_matrix(calibs)
         calibs[:, :, :3] = r_avg
 

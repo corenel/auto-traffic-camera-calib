@@ -36,22 +36,32 @@ def compute_average_rotation_matrix(calibs):
         rotated_vectors.append(rotated_vector / np.linalg.norm(rotated_vector))
     mean_rotated_vector = np.mean(np.stack(rotated_vectors), axis=0)
     mean_rotated_vector /= np.linalg.norm(mean_rotated_vector)
-    # compute average rotation matrix
+    # compute average rotation vector
     axis = np.cross(mean_rotated_vector, common_unit_vector)
     angle = np.dot(mean_rotated_vector, common_unit_vector)
     rvec = angle * axis
-    rmat = cv2.Rodrigues(rvec)[0]
+    # get basis with z_avg
+    z_avg = compute_z_avg(calibs)
+    basis_1, basis_2, _ = basis(z_avg)
+    # get representation of rvec under new basis
+    bases = np.stack([basis_1, basis_2, z_avg],
+                     axis=1)
+    rvec_repr = np.linalg.inv(bases) * np.eye(3) * rvec
+    rvec_new = rvec_repr[:, 0] * basis_1 + rvec_repr[:, 1] * basis_2 + rvec_repr[:, 2] * z_avg
+    # transform rvec to rotation matrix
+    rmat = cv2.Rodrigues(rvec_new)[0]
     return rmat
 
 
 def reproject_to_ground(p, calib, camera):
-    camera.set_R(calib[:, :3])
-    camera.set_t(calib[:, 3])
+    camera.R = calib[:, :3]
+    camera.t = calib[:, 3].reshape(3, 1)
+    camera.update_P()
     return camera.image_to_world(p, z=0)
 
 
 def distance_to_camera(p, calib):
-    point_to_camera = p + calib[:2, :]
+    point_to_camera = p + calib[:, 3]
     return np.linalg.norm(point_to_camera[:2])
 
 

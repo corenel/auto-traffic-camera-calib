@@ -194,7 +194,7 @@ class Camera:
         else:
             warn('world_to_image not implemented')
 
-    def image_to_world(self, image_px, z):
+    def image_to_world(self, image_px, z, undistort=True):
         """
         Project image points with defined world z to world coordinates.
 
@@ -202,14 +202,16 @@ class Camera:
         :type image_px: numpy.array, shape=(2 or 3, n)
         :param z: world z coordinate of the projected image points
         :type z: float
+        :param undistort: do undistortion
+        :type undistort: bool
         :return: n projective world coordinates
         :rtype: numpy.array, shape=(3, n)
         """
         if image_px.shape[0] == 3:
             image_px = p2e(image_px)
-        image_undistorted = self.undistort(image_px)
+        image_undistorted = self.undistort(image_px) if undistort else image_px
         tmpP = np.hstack(
             (self.P[:, [0, 1]],
              self.P[:, 2, np.newaxis] * z + self.P[:, 3, np.newaxis]))
-        world_xy = p2e(np.linalg.inv(tmpP).dot(e2p(image_undistorted)))
+        world_xy = p2e(np.linalg.pinv(tmpP).dot(e2p(image_undistorted)))
         return np.vstack((world_xy, z * np.ones(image_px.shape[1])))
