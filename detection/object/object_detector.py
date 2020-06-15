@@ -107,9 +107,9 @@ class ObjectDetector:
                     class_ids.append(class_id)
                     scores.append(detections[det_idx]['scores'][box_idx])
             detections[det_idx] = {
-                'rois': np.stack(rois),
-                'class_ids': np.stack(class_ids),
-                'scores': np.stack(scores)
+                'rois': np.stack(rois) if len(rois) > 0 else np.empty((0, 4)),
+                'class_ids': np.stack(class_ids) if len(class_ids) > 0 else np.empty((0, 1)),
+                'scores': np.stack(scores) if len(scores) > 0 else np.empty((0, 1))
             }
         return detections
 

@@ -24,8 +24,8 @@ class TestCalibrator(unittest.TestCase):
         keypoints, orientations = model.detect(frame_rgb,
                                                detections[0],
                                                visualize=True)
-        calibrator = Calibration()
-        calibrator.camera.set_K(np.array([[1, 0, 1296], [0, 1, 1024], [0, 0, 1]]))
+        calibrator = Calibration(
+            camera_matrix=np.array([[1, 0, 1296], [0, 1, 1024], [0, 0, 1]]))
         calibs = calibrator.calibrate(keypoints.cpu().numpy(),
                                       orientations.cpu().numpy())
         calib_est = calibrator.filter_and_average(calibs)

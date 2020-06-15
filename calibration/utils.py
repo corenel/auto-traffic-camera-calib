@@ -54,9 +54,7 @@ def compute_average_rotation_matrix(calibs):
 
 
 def reproject_to_ground(p, calib, camera):
-    camera.R = calib[:, :3]
-    camera.t = calib[:, 3].reshape(3, 1)
-    camera.update_P()
+    camera.set_extrinsic(calib)
     return camera.image_to_world(p, z=0)
 
 

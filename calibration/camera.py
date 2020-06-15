@@ -39,7 +39,6 @@ class Camera:
 
     Refer to https://github.com/smidm/camera.py
     """
-
     def __init__(self):
         # camera intrinsic parameters
         self.K = np.eye(3)
@@ -78,6 +77,16 @@ class Camera:
         :type t: numpy.array, shape=(3, 1)
         """
         self.t = t
+        self.update_P()
+
+    def set_extrinsic(self, calib):
+        self.R = calib[:, :3]
+        self.t = calib[:, 3].reshape(3, 1)
+        self.update_P()
+
+    def set_intrinsic(self, camera_matrix, distortion_coefficients):
+        self.K = camera_matrix
+        self.opencv_dist_coeff = distortion_coefficients
         self.update_P()
 
     def update_P(self):

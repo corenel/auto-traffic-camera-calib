@@ -1,19 +1,25 @@
 import numpy as np
-import calibration.utils as utils
+
 import calibration.filters as filters
-from calibration.camera import Camera
+import calibration.utils as utils
 from assets.real_world_keypoints import real_world_keypoints
+from calibration.camera import Camera
 from detection.keypoint.utils import orientation_to_keypoints
 
 
 def compute_focus_region_mid_point():
-    return np.array([1296, 1024]).reshape(2, 1).astype(np.float)
+    return np.array([[1296], [1024]], dtype=np.float)
 
 
 class Calibration:
-    def __init__(self) -> None:
+    def __init__(self, camera_matrix=None, dist_coeff=None) -> None:
         super().__init__()
         self.camera = Camera()
+        if camera_matrix is not None:
+            self.camera.set_K(camera_matrix)
+        if dist_coeff is not None:
+            self.camera.opencv_dist_coeff = dist_coeff
+        self.calib_est = None
 
     def calibrate(self, keypoints, orientations):
         calibs = []
@@ -26,7 +32,11 @@ class Calibration:
                 ret, rmat, tvec = self.camera.calibrate_extrinsic(
                     visible_objects, visible_keypoints)
                 calibs.append(np.concatenate([rmat, tvec], axis=1))
-        return np.stack(calibs)
+
+        if len(calibs) > 0:
+            return np.stack(calibs)
+        else:
+            return np.empty((0, 3, 4))
 
     def filter_and_average(self, calibs: np.array):
         """
@@ -35,6 +45,9 @@ class Calibration:
         :param calibs: set of calibrations of the shape [N, 3, 4]
         :return: estimated calibration of the shape [3, 4]
         """
+        if calibs.shape[0] == 0:
+            return None
+
         # get mid point
         p = compute_focus_region_mid_point()
 
@@ -53,3 +66,11 @@ class Calibration:
         calib_est = calibs[median_idx]
 
         return calib_est
+
+    def image_to_world(self, p, calib):
+        self.camera.set_extrinsic(calib)
+        return self.camera.image_to_world(p, z=0)
+
+    def world_to_image(self, p, calib):
+        self.camera.set_extrinsic(calib)
+        return self.camera.world_to_image(p)

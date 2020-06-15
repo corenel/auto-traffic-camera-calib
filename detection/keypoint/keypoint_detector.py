@@ -1,8 +1,6 @@
-import sys
-
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from detection.keypoint.datasets import TensorDetectionDataset
 from detection.keypoint.models import KeyPointModel
@@ -52,40 +50,44 @@ class KeypointDetector:
         orientations = []
         keypoints = []
         with torch.no_grad():
-            with tqdm(total=len(data_loader),
-                      ncols=0,
-                      file=sys.stdout,
-                      desc='Stage 2 Evaluation...') as pbar:
-                for i, in_batch in enumerate(data_loader):
-                    image_in1, image_in2 = in_batch
-                    if torch.cuda.is_available():
-                        image_in1, image_in2 = \
-                            image_in1.cuda(), image_in2.cuda()
+            # with tqdm(total=len(data_loader),
+            #           ncols=0,
+            #           file=sys.stdout,
+            #           desc='Stage 2 Evaluation...') as pbar:
+            for i, in_batch in enumerate(data_loader):
+                image_in1, image_in2 = in_batch
+                if torch.cuda.is_available():
+                    image_in1, image_in2 = \
+                        image_in1.cuda(), image_in2.cuda()
 
-                    coarse_kp, fine_kp, orientation = self.net(
-                        image_in1, image_in2)
+                coarse_kp, fine_kp, orientation = self.net(
+                    image_in1, image_in2)
 
-                    predicted_keypoints = get_preds(fine_kp).cpu()
-                    keypoints.append(predicted_keypoints)
-                    # print('fine_kp: {}'.format(fine_kp.shape))
-                    # print('predicted_keypoints: {}'.format(
-                    #     predicted_keypoints.shape))
+                predicted_keypoints = get_preds(fine_kp).cpu()
+                keypoints.append(predicted_keypoints)
+                # print('fine_kp: {}'.format(fine_kp.shape))
+                # print('predicted_keypoints: {}'.format(
+                #     predicted_keypoints.shape))
 
-                    _, predicted_orientations = torch.max(orientation.data, 1)
-                    predicted_orientations = predicted_orientations.cpu()
-                    orientations.append(predicted_orientations)
-                    # print('predicted_orientations: {}'.format(
-                    #     predicted_orientations.shape))
+                _, predicted_orientations = torch.max(orientation.data, 1)
+                predicted_orientations = predicted_orientations.cpu()
+                orientations.append(predicted_orientations)
+                # print('predicted_orientations: {}'.format(
+                #     predicted_orientations.shape))
 
-                    if visualize:
-                        # print(predicted_orientations)
-                        visualize_results(predicted_keypoints,
-                                          predicted_orientations, image_in1, i,
-                                          self.denormalize)
+                if visualize:
+                    # print(predicted_orientations)
+                    visualize_results(predicted_keypoints,
+                                      predicted_orientations, image_in1, i,
+                                      self.denormalize)
 
-                    pbar.update()
-        keypoints = torch.cat(keypoints, dim=0)
-        orientations = torch.cat(orientations, dim=0)
+                # pbar.update()
+        if len(keypoints) > 0:
+            keypoints = torch.cat(keypoints, dim=0)
+            orientations = torch.cat(orientations, dim=0)
+        else:
+            keypoints = torch.empty(0, 20, 2)
+            orientations = torch.empty(0, 1)
         if bboxes is not None:
             keypoints = process_keypoints(bboxes, keypoints, orientations)
         return keypoints, orientations
