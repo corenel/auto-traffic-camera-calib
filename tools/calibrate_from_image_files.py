@@ -1,19 +1,19 @@
 import argparse
 import glob
 import os
+import pickle
 
 import cv2
 import numpy as np
 import yaml
 from tqdm import tqdm
-from misc.utils import image_resize
 
 from calibration import Calibration
 from detection.keypoint import KeypointDetector
-from detection.object import ObjectDetector
-
 from detection.keypoint.utils import visualize_keypoint
+from detection.object import ObjectDetector
 from detection.object.utils.utils import visualize_bbox
+from misc.utils import image_resize
 
 
 def main():
@@ -70,8 +70,8 @@ def main():
     image_files = glob.glob(os.path.join(opt.input_dir, '*.bmp'))
     calib_candidates = []
     for image_idx, image_file in enumerate(tqdm(image_files)):
-        if image_idx >= 10:
-            break
+        # if image_idx >= 10:
+        #     break
         # detection
         image = cv2.imread(image_file)
         detections = object_detector.detect(frame=image, visualize=False)
@@ -107,6 +107,12 @@ def main():
     calib_candidates = np.concatenate(calib_candidates, axis=0)
     calib_est = calibrator.filter_and_average(calib_candidates)
     print(calib_est)
+
+    with open('calib.pkl', 'wb') as f:
+        pickle.dump({
+            'candidates': calib_candidates,
+            'estimation': calib_est
+        }, f)
 
 
 if __name__ == '__main__':
