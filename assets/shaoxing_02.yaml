@@ -1,0 +1,14 @@
+camera:
+  internal_address: "192.168.2.174"
+  external_address: "frp.yuthon.com:30282"
+  stream: "rtsp://admin:Admin123@frp.yuthon.com:30254/MediaInput/h264/stream_1"
+  intrinsic: [[5012.75675676, 0., 1920.],
+              [0., 3759.56756757, 1080.],
+              [0., 0., 1.]]
+  distortion: null
+radar:
+  internal_address: "192.168.2.102"
+  external_address: "frp.yuthon.com:30281"
+  username: admin
+  password: abc.123
+

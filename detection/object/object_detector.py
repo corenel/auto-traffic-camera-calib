@@ -143,6 +143,8 @@ class ObjectDetector:
         # result
         if visualize:
             img_show = self.visualize(detections, ori_imgs)
+            # cv2.imshow('detection result', img_show)
+            # cv2.waitKey(0)
             cv2.imwrite('/tmp/result.png', img_show)
 
         return detections

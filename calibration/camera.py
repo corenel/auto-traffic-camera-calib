@@ -218,7 +218,9 @@ class Camera:
         """
         if image_px.shape[0] == 3:
             image_px = p2e(image_px)
-        image_undistorted = self.undistort(image_px) if undistort else image_px
+        image_undistorted = self.undistort(
+            image_px
+        ) if undistort or self.opencv_dist_coeff is None else image_px
         tmpP = np.hstack(
             (self.P[:, [0, 1]],
              self.P[:, 2, np.newaxis] * z + self.P[:, 3, np.newaxis]))

@@ -2,7 +2,6 @@ import numpy as np
 
 import calibration.filters as filters
 import calibration.utils as utils
-from assets.real_world_keypoints import real_world_keypoints
 from calibration.camera import Camera
 from detection.keypoint.utils import orientation_to_keypoints
 
@@ -12,7 +11,10 @@ def compute_focus_region_mid_point():
 
 
 class Calibration:
-    def __init__(self, camera_matrix=None, dist_coeff=None) -> None:
+    def __init__(self,
+                 camera_matrix=None,
+                 dist_coeff=None,
+                 priors=None) -> None:
         super().__init__()
         self.camera = Camera()
         if camera_matrix is not None:
@@ -20,11 +22,13 @@ class Calibration:
         if dist_coeff is not None:
             self.camera.opencv_dist_coeff = dist_coeff
         self.calib_est = None
+        self.priors = priors
 
     def calibrate(self, keypoints, orientations):
         calibs = []
         for box_idx in range(orientations.shape[0]):
-            for car_model, model_keypoints in real_world_keypoints.items():
+            for car_model, car_prior in self.priors.items():
+                model_keypoints = np.array(car_prior)
                 visible_keypoints = keypoints[box_idx][
                     orientation_to_keypoints[int(orientations[box_idx])]]
                 visible_objects = model_keypoints[orientation_to_keypoints[int(
